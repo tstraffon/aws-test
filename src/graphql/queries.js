@@ -3,7 +3,7 @@
 
 export const getTodo = /* GraphQL */ `
   query GetTodo($id: ID!) {
-    getTodo(id: $id) {
+    getTodo(id: $id, _deleted: false) {
       id
       name
       description

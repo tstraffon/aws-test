@@ -4,6 +4,8 @@ import { API } from 'aws-amplify';
 import { withAuthenticator, AmplifySignOut } from '@aws-amplify/ui-react';
 import { listTodos } from './graphql/queries';
 import { createTodo as createTodoMutation, deleteTodo as deleteTodoMutation } from './graphql/mutations';
+import { DataStore } from '@aws-amplify/datastore';
+import { Todo } from './models';
 
 const initialFormState = { name: '', description: '' }
 
@@ -16,21 +18,30 @@ function App() {
   }, []);
 
   async function fetchTodos() {
-    const apiData = await API.graphql({ query: listTodos });
-    setTodos(apiData.data.listTodos.items);
+    // const apiData = await API.graphql({ query: listTodos });
+    // setTodos(apiData.data.listTodos.items);
+
+    const toDos = await DataStore.query(Todo)
+    console.log("fetch todos result", toDos)
+    setTodos(toDos);
   }
 
   async function createTodo() {
     if (!formData.name || !formData.description) return;
-    await API.graphql({ query: createTodoMutation, variables: { input: formData } });
+    // await API.graphql({ query: createTodoMutation, variables: { input: formData } });
+    await DataStore.save(new Todo({...formData}))
     setTodos([ ...todos, formData ]);
     setFormData(initialFormState);
   }
 
-  async function deleteTodo({ id }) {
-    const newTodosArray = todos.filter(note => note.id !== id);
+  async function deleteTodo( todo ) {
+    const newTodosArray = todos.filter(note => note.id !== todo.id);
     setTodos(newTodosArray);
-    await API.graphql({ query: deleteTodoMutation, variables: { input: { id } }});
+    await DataStore.delete(Todo, item => item.id("eq", todo.id ))
+    // await API.graphql({ query: deleteTodoMutation, variables: { input: { id } }}).catch(err => {
+    //   console.error("deleteTodo error: ", err);
+    // });
+
   }
 
   return (
